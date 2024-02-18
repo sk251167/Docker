@@ -1,0 +1,49 @@
+version: "3.9"
+services:
+
+  aspnet-svc:
+    hostname: aspnet-application-dc
+    build: 
+        context: ./aspnet-application
+    container_name: aspnetapplicationcontainer
+    platform: windows
+    mem_limit: 500MB
+    security_opt:
+        - "credentialspec=file://application_containersa.json"
+        
+  windows-service-application-svc:
+    hostname: windows-service-application-dc
+    build:
+        context: ./windows-service-application
+    container_name: windowsserviceapplicationcontainer
+    platform: windows
+    mem_limit: 500MB
+    security_opt:
+        - "credentialspec=file://application_containersa.json"
+
+  net-core-application-svc:
+    hostname: net-core-application-dc
+    user: 'NT AUTHORITY\SYSTEM'
+    build: 
+        context: ./net-core-application
+    ports:
+      - 80
+      - 443
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=abc@123
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/Certificates/localhost.pfx
+    volumes:
+      - C:\Certificates\:C:\Certificates:ro
+    container_name: netcoreapplicationcontainer
+    extra_hosts: *default-extra_hosts
+    platform: windows
+    mem_limit: 500MB
+    security_opt:
+        - "credentialspec=file://application_containersa.json"
+        
+networks:
+  default:
+    name: docker_default
+    external: true
