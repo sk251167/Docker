@@ -38,23 +38,19 @@ RUN $service_name = 'Application Service'; `
 #========================================================================================================================#
 
 # Health check to verify the service is running
-HEALTHCHECK --interval=30s --timeout=10s --retries=10 `
+HEALTHCHECK --interval=30s --timeout=30s --retries=3 `
    CMD powershell -command `
    try { `
-       $service = Get-Service -Name 'Application Service'; `
+       $service = Get-Service -Name 'Application Service Name'; `
        if ($service.Status -eq 'Running') { exit 0 } else { exit 1 }; `
    } catch { exit 1 }
 
-# Set the entry point and command to start the service and monitor events
-ENTRYPOINT ["powershell"]
-CMD Start-Service 'Application Service'; `
-    $idx = (Get-EventLog -LogName System -Newest 1).Index; `
-    While ($true) `
-    {; `
-		Start-Sleep -Seconds 1; `
-		$idx2  = (Get-EventLog -LogName System -Newest 1).Index; `
-		Get-EventLog -LogName System -Newest ($idx2 - $idx) | Sort Index | Format-List; `
-		$idx = $idx2; `
-    }
-	
+# Set the entry point and command to start the service and wait till process is running.
+ENTRYPOINT ["powershell", `
+			"-Command" , `
+			"Start-Service 'Application Service Name';", `
+			"Write-Host Service started;", `
+			"Wait-Process -Name 'Application Process Name';", `
+			"Write-Host Service stopped;"]
+
 #========================================================================================================================#
